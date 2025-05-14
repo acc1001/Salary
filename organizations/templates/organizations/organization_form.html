@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load users_tags %} {# Assuming you have a get_item filter here #}
+
+{% block title %}{% if form.instance.pk %}{% trans "ویرایش سازمان" %}{% else %}{% trans "افزودن سازمان جدید" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if form.instance.pk %}{% trans "ویرایش سازمان" %}{% else %}{% trans "افزودن سازمان جدید" %}{% endif %}</h2>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        {# Display general form errors #}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% trans "لطفاً خطاهای زیر را اصلاح کنید:" %}
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% if field == '__all__' %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% else %}
+                            <li><strong>{{ form.fields|get_item:field.name }}:</strong> {{ errors|join:", " }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {# Manually display form fields for better control #}
+        {% for field in form %}
+            <div class="mb-3">
+                 {# Handle checkbox display for is_active field #}
+                {% if field.name == 'is_active' %}
+                     <div class="form-check">
+                         {{ field }}
+                         {{ field.label_tag }}
+                          {% if field.errors %}
+                             {% for error in field.errors %}
+                                 <div class="invalid-feedback d-block">{{ error }}</div>
+                             {% endfor %}
+                          {% endif %}
+                          {% if field.help_text %}
+                             <small class="form-text text-muted">{{ field.help_text }}</small>
+                          {% endif %}
+                     </div>
+                 {% else %}
+                     {{ field.label_tag }}
+                     {{ field }}
+                     {% if field.errors %}
+                         {% for error in field.errors %}
+                             <div class="invalid-feedback d-block">{{ error }}</div>
+                         {% endfor %}
+                     {% endif %}
+                     {% if field.help_text %}
+                         <small class="form-text text-muted">{{ field.help_text }}</small>
+                     {% endif %}
+                 {% endif %}
+            </div>
+        {% endfor %}
+
+        {# Submit button - Show only if user has permission #}
+        {# If updating, check change permission for the object #}
+        {# If creating, check general add permission or staff/superuser #}
+        {% if form.instance.pk %}
+            {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(form.instance, 'organizations.change_organization') %}
+                <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+            {% endif %}
+        {% else %}
+             {% if request.user.is_staff or request.user.is_superuser or request.user.has_perm('organizations.add_organization') %}
+                  <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+             {% endif %}
+        {% endif %}
+
+        <a href="{% url 'organizations:organization_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+    </form>
+</div>
+{% endblock %}

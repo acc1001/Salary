@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "تایید حذف سابقه شغلی" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "تایید حذف سابقه شغلی" %}</h2>
+    <p>{% trans "آیا از حذف سابقه شغلی" %} "<strong>{{ employmenthistory }}</strong>" {% trans "اطمینان دارید؟ این عمل غیرقابل بازگشت است." %}</p>
+
+    {# Delete button - Show only if user has permission #}
+    {# Check delete permission in the organization of the history entry #}
+    {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(employmenthistory.organization, 'hr.delete_employmenthistory') %}
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% trans "حذف" %}</button>
+            {# Link back to list #}
+            <a href="{% url 'hr:employmenthistory_list_by_employee' employee_pk=employmenthistory.employee.pk %}" class="btn btn-secondary">{% trans "انصراف" %}</a>
+        </form>
+    {% else %}
+         <p class="text-danger">{% trans "شما مجوز حذف این سابقه شغلی را ندارید." %}</p>
+         {# Link back to list #}
+         <a href="{% url 'hr:employmenthistory_list_by_employee' employee_pk=employmenthistory.employee.pk %}" class="btn btn-secondary">{% trans "بازگشت به لیست سوابق شغلی" %}</a>
+    {% endif %}
+</div>
+{% endblock %}

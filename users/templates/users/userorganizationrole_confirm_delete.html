@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "تایید حذف انتساب نقش سازمانی" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "تایید حذف انتساب نقش سازمانی" %}</h2>
+    <p>{% trans "آیا از حذف انتساب نقش سازمانی" %} "<strong>{{ user_organization_role }}</strong>" {% trans "اطمینان دارید؟ این عمل غیرقابل بازگشت است." %}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">{% trans "حذف" %}</button>
+        {# Link to cancel and go back to the list #}
+        {# Assuming the object (user_organization_role) is in context to get organization or user #}
+        {% if user_organization_role.organization %}
+            <a href="{% url 'users:userorganizationrole_list_by_org' organization_pk=user_organization_role.organization.pk %}" class="btn btn-secondary">{% trans "انصراف" %}</a>
+        {% elif user_organization_role.user %}
+             {# Assuming you have a user detail page or list filtered by user #}
+             {# <a href="{% url 'users:userorganizationrole_list_by_user' user_pk=user_organization_role.user.pk %}" class="btn btn-secondary">{% trans "انصراف" %}</a> #}
+             <a href="{% url 'users:userorganizationrole_list' %}" class="btn btn-secondary">{% trans "انصراف" %}</a> {# Fallback #}
+        {% else %}
+             <a href="{% url 'users:userorganizationrole_list' %}" class="btn btn-secondary">{% trans "انصراف" %}</a> {# Fallback #}
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

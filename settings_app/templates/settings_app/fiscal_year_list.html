@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load users_tags %} {# Assuming you have a get_item filter here #}
+
+{% block title %}{% trans "لیست سال‌های مالی" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "لیست سال‌های مالی" %}</h2>
+
+    {# Link to create a new Fiscal Year - Show only if user has permission #}
+    {# Since FiscalYear is linked to Organization, check permission to add FiscalYear in any accessible organization #}
+    {# A more precise check would be needed if creating from an organization-specific page #}
+    {# For now, let's show if user is staff/superuser or has general add permission #}
+    {% if request.user.is_staff or request.user.is_superuser or request.user.has_perm('settings_app.add_fiscalyear') %}
+        <a href="{% url 'settings_app:fiscal_year_create' %}" class="btn btn-primary mb-3">{% trans "افزودن سال مالی جدید" %}</a>
+    {% endif %}
+
+    {% if fiscal_years %}
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "سازمان" %}</th>
+                    <th>{% trans "عنوان" %}</th>
+                    <th>{% trans "تاریخ شروع" %}</th>
+                    <th>{% trans "تاریخ پایان" %}</th>
+                    <th>{% trans "عملیات" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for year in fiscal_years %}
+                <tr>
+                    <td>{{ year.organization.name }}</td>
+                    <td>{{ year.title }}</td>
+                    <td>{{ year.start_date }}</td>
+                    <td>{{ year.end_date }}</td>
+                    <td>
+                        {# Links for related objects - Show only if user has view permission in the organization #}
+                        {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(year.organization, 'settings_app.view_insuranceceiling') %}
+                            <a href="{% url 'settings_app:insurance_ceiling_list' fiscal_year_pk=year.pk %}" class="btn btn-info btn-sm">{% trans "سقف بیمه" %}</a>
+                        {% endif %}
+                        {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(year.organization, 'settings_app.view_taxlevel') %}
+                             <a href="{% url 'settings_app:tax_level_list' fiscal_year_pk=year.pk %}" class="btn btn-warning btn-sm">{% trans "سطوح مالیاتی" %}</a>
+                        {% endif %}
+                        {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(year.organization, 'settings_app.view_financialperiod') %}
+                             <a href="{% url 'settings_app:financial_period_list' fiscal_year_pk=year.pk %}" class="btn btn-secondary btn-sm">{% trans "دوره‌های مالی" %}</a>
+                        {% endif %}
+
+                        {# Link to update Fiscal Year - Show only if user has permission #}
+                        {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(year.organization, 'settings_app.change_fiscalyear') %}
+                            <a href="{% url 'settings_app:fiscal_year_update' pk=year.pk %}" class="btn btn-success btn-sm">{% trans "ویرایش" %}</a>
+                        {% endif %}
+                        {# Link to delete Fiscal Year (if delete view exists) - Show only if user has permission #}
+                        {# {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(year.organization, 'settings_app.delete_fiscalyear') %} #}
+                        {# <a href="{% url 'settings_app:fiscal_year_delete' pk=year.pk %}" class="btn btn-danger btn-sm">{% trans "حذف" %}</a> #}
+                        {# {% endif %} #}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{% trans "هیچ سال مالی یافت نشد." %}</p>
+    {% endif %}
+</div>
+{% endblock %}

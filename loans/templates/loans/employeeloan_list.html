@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "لیست وام‌های کارکنان" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>
+        {% trans "لیست وام‌های کارکنان" %}
+        {% if employee %}{% trans "برای کارمند" %}: {{ employee.get_full_name|default:employee.username }}{% endif %}
+        {% if organization %}{% trans "در سازمان" %}: {{ organization.name }}{% endif %}
+    </h2>
+
+    {# Link to create a new Employee Loan - Show only if user has permission #}
+    {# If filtered by organization, check add permission in that organization #}
+    {# If filtered by employee, check add permission in ANY of the employee's organizations #}
+    {# If not filtered, check general add permission or staff/superuser #}
+    {% if organization and request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(organization, 'loans.add_employeeloan') %}
+         {# Assuming a create URL pattern exists that takes organization_pk and/or employee_pk #}
+         <a href="{% url 'loans:employeeloan_create' %}?organization_pk={{ organization.pk }}{% if employee %}&employee_pk={{ employee.pk }}{% endif %}" class="btn btn-primary mb-3">
+            {% trans "افزودن وام جدید در این سازمان" %}
+         </a>
+    {% elif employee %}
+         {% with can_add_loan=False %}
+             {% for emp_org in employee.employee_organizations.all %}
+                 {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(emp_org.organization, 'loans.add_employeeloan') %}
+                     {% with can_add_loan=True %}{% endwith %}
+                 {% endif %}
+             {% endfor %}
+             {% if can_add_loan %}
+                 <a href="{% url 'loans:employeeloan_create' %}?employee_pk={{ employee.pk }}{% if organization %}&organization_pk={{ organization.pk }}{% endif %}" class="btn btn-primary mb-3">
+                    {% trans "افزودن وام جدید برای این کارمند" %}
+                 </a>
+             {% endif %}
+         {% endwith %}
+    {% elif not organization and not employee and request.user.is_staff or request.user.is_superuser or request.user.has_perm('loans.add_employeeloan') %}
+         <a href="{% url 'loans:employeeloan_create' %}" class="btn btn-primary mb-3">
+            {% trans "افزودن وام جدید" %}
+         </a>
+    {% endif %}
+
+
+    {% if employee_loans %}
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    {% if not employee %}<th>{% trans "کارمند" %}</th>{% endif %}
+                    {% if not organization %}<th>{% trans "سازمان" %}</th>{% endif %}
+                    <th>{% trans "مبلغ وام" %}</th>
+                    <th>{% trans "تاریخ اولین قسط" %}</th>
+                    <th>{% trans "تاریخ آخرین قسط" %}</th>
+                    <th>{% trans "مبلغ قسط ماهیانه" %}</th>
+                    <th>{% trans "تسویه شده؟" %}</th>
+                    <th>{% trans "عملیات" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in employee_loans %}
+                <tr>
+                    {% if not employee %}<td>{{ loan.employee.get_full_name|default:loan.employee.username }}</td>{% endif %}
+                    {% if not organization %}<td>{{ loan.organization.name }}</td>{% endif %}
+                    <td>{{ loan.loan_amount }}</td>
+                    <td>{{ loan.first_installment_date }}</td>
+                    <td>{{ loan.last_installment_date }}</td>
+                    <td>{{ loan.monthly_installment_amount }}</td>
+                    <td>
+                        {% if loan.is_settled %}
+                            <span class="badge bg-success">{% trans "بله" %}</span>
+                        {% else %}
+                            <span class="badge bg-danger">{% trans "خیر" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {# Link to update this Employee Loan - Show only if user has permission #}
+                        {# Check if user has 'change_employeeloan' permission in the loan's organization #}
+                        {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(loan.organization, 'loans.change_employeeloan') %}
+                            <a href="{% url 'loans:employeeloan_update' pk=loan.pk %}" class="btn btn-warning btn-sm">{% trans "ویرایش" %}</a>
+                        {% endif %}
+                        {# Link to delete this Employee Loan - Show only if user has permission #}
+                        {# Check if user has 'delete_employeeloan' permission in the loan's organization #}
+                        {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(loan.organization, 'loans.delete_employeeloan') %}
+                            <a href="{% url 'loans:employeeloan_delete' pk=loan.pk %}" class="btn btn-danger btn-sm">{% trans "حذف" %}</a>
+                        {% endif %}
+                         {# Optional: Link to detail view #}
+                         {# <a href="{% url 'loans:employeeloan_detail' pk=loan.pk %}" class="btn btn-info btn-sm">{% trans "جزئیات" %}</a> #}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{% trans "هیچ وام کارکنان یافت نشد." %}</p>
+    {% endif %}
+
+    {# Link back to relevant pages based on context #}
+    <div class="mt-3">
+        {% if employee %}
+             {# Assuming you have an employee detail page #}
+             {# <a href="{% url 'employees:employee_detail' pk=employee.pk %}" class="btn btn-secondary">{% trans "بازگشت به جزئیات کارمند" %}</a> #}
+             <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary">{% trans "بازگشت به لیست کارکنان" %}</a> {# Fallback #}
+        {% elif organization %}
+             <a href="{% url 'organizations:organization_detail' pk=organization.pk %}" class="btn btn-secondary">{% trans "بازگشت به جزئیات سازمان" %}</a>
+        {% else %}
+             <a href="{% url 'home' %}" class="btn btn-secondary">{% trans "بازگشت به صفحه اصلی" %}</a>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

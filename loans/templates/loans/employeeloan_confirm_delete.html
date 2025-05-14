@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "تایید حذف وام" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "تایید حذف وام" %}</h2>
+    <p>{% trans "آیا از حذف وام" %} "<strong>{{ employee_loan }}</strong>" {% trans "اطمینان دارید؟ این عمل غیرقابل بازگشت است." %}</p>
+
+    {# Delete button - Show only if user has permission #}
+    {# Check delete permission in the organization of the loan #}
+    {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(employee_loan.organization, 'loans.delete_employeeloan') %}
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% trans "حذف" %}</button>
+            {# Link back to list #}
+            <a href="{% url 'loans:employeeloan_list_by_employee' employee_pk=employee_loan.employee.pk %}" class="btn btn-secondary">{% trans "انصراف" %}</a>
+        </form>
+    {% else %}
+         <p class="text-danger">{% trans "شما مجوز حذف این وام را ندارید." %}</p>
+         {# Link back to list #}
+         <a href="{% url 'loans:employeeloan_list_by_employee' employee_pk=employee_loan.employee.pk %}" class="btn btn-secondary">{% trans "بازگشت به لیست وام‌ها" %}</a>
+    {% endif %}
+</div>
+{% endblock %}

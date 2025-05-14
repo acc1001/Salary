@@ -1,0 +1,60 @@
+{% extends 'base.html' %} {# یا base_generic.html اگر از آن استفاده می‌کنید #}
+{% load i18n %}
+{% load users_tags %} {# اگر از فیلتر get_item استفاده می‌کنید #}
+
+{% block title %}{% trans "ویرایش سقف بیمه" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "ویرایش سقف بیمه" %}</h2>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        {# نمایش خطاهای کلی فرم #}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% trans "لطفاً خطاهای زیر را اصلاح کنید:" %}
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% if field == '__all__' %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% else %}
+                            <li><strong>{{ form.fields|get_item:field }}:</strong> {{ errors|join:", " }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {# نمایش فیلدهای فرم به صورت دستی #}
+        {% for field in form %}
+            <div class="mb-3">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary mt-3">{% trans "به‌روزرسانی سقف بیمه" %}</button>
+        {# لینک بازگشت به لیست سقف‌های بیمه همان سال مالی (نیاز به fiscal_year در context یا از شیء موجود) #}
+        {% if fiscal_year %}
+            <a href="{% url 'settings_app:insurance_ceiling_list' fiscal_year_pk=fiscal_year.pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% elif form.instance.pk %} {# اگر در حال ویرایش هستیم، از شیء موجود استفاده کن #}
+             <a href="{% url 'settings_app:insurance_ceiling_list' fiscal_year_pk=form.instance.fiscal_year.pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% else %} {# اگر نه در حال ویرایش و نه در حال ایجاد برای سال مالی مشخص هستیم #}
+             <a href="{% url 'settings_app:fiscal_year_list' %}" class="btn btn-secondary mt-3">{% trans "بازگشت به لیست سال‌های مالی" %}</a>
+        {% endif %}
+
+    </form>
+</div>
+{% endblock %}

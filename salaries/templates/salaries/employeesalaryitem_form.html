@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load users_tags %} {# Assuming you have a get_item filter here #}
+
+{% block title %}{% if form.instance.pk %}{% trans "ویرایش آیتم حقوقی کارمند" %}{% else %}{% trans "افزودن آیتم حقوقی کارمند جدید" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if form.instance.pk %}{% trans "ویرایش آیتم حقوقی کارمند" %}{% else %}{% trans "افزودن آیتم حقوقی کارمند جدید" %}{% endif %}</h2>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        {# Display general form errors #}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% trans "لطفاً خطاهای زیر را اصلاح کنید:" %}
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% if field == '__all__' %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% else %}
+                            <li><strong>{{ form.fields|get_item:field.name }}:</strong> {{ errors|join:", " }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {# Manually display form fields for better control #}
+        {% for field in form %}
+            <div class="mb-3">
+                 {{ field.label_tag }}
+                 {{ field }}
+                 {% if field.errors %}
+                     {% for error in field.errors %}
+                         <div class="invalid-feedback d-block">{{ error }}</div>
+                     {% endfor %}
+                 {% endif %}
+                 {% if field.help_text %}
+                     <small class="form-text text-muted">{{ field.help_text }}</small>
+                 {% endif %}
+            </div>
+        {% endfor %}
+
+        {# Submit button - Show only if user has permission #}
+        {# If updating, check change permission for the object's organization #}
+        {# If creating, check add permission for the organization of the related financial period (financial_period is in context) #}
+        {% if form.instance.pk %} {# If updating #}
+            {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(form.instance.organization, 'salaries.change_employeesalaryitem') %}
+                <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره تغییرات" %}</button>
+            {% endif %}
+        {% elif financial_period %} {# If creating and financial_period is in context #}
+             {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(financial_period.organization, 'salaries.add_employeesalaryitem') %}
+                  <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+             {% endif %}
+        {% endif %}
+
+
+        {# Link back to relevant list #}
+        {% if form.instance.pk %}
+             <a href="{% url 'salaries:employeesalaryitem_list_by_employee_period' employee_pk=form.instance.employee.pk financial_period_pk=form.instance.financial_period.pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% elif employee_pk and financial_period_pk %} {# If creating for specific employee and period (passed via context or initial) #}
+             <a href="{% url 'salaries:employeesalaryitem_list_by_employee_period' employee_pk=employee_pk financial_period_pk=financial_period_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% elif employee_pk %} {# If creating for specific employee #}
+             {# Assuming a list filtered by employee exists #}
+             {# <a href="{% url 'salaries:employeesalaryitem_list_by_employee' employee_pk=employee_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a> #}
+             <a href="{% url 'salaries:employeesalaryitem_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a> {# Fallback #}
+        {% elif financial_period_pk %} {# If creating for specific financial period #}
+             {# Assuming a list filtered by financial period exists #}
+             {# <a href="{% url 'salaries:employeesalaryitem_list_by_period' financial_period_pk=financial_period_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a> #}
+             <a href="{% url 'salaries:employeesalaryitem_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a> {# Fallback #}
+        {% else %} {# Fallback to general list #}
+             <a href="{% url 'salaries:employeesalaryitem_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

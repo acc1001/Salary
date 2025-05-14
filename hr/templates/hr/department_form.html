@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load users_tags %} {# Assuming you have a get_item filter here #}
+
+{% block title %}{% if form.instance.pk %}{% trans "ویرایش دپارتمان" %}{% else %}{% trans "افزودن دپارتمان جدید" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if form.instance.pk %}{% trans "ویرایش دپارتمان" %}{% else %}{% trans "افزودن دپارتمان جدید" %}{% endif %}</h2>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        {# Display general form errors #}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% trans "لطفاً خطاهای زیر را اصلاح کنید:" %}
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% if field == '__all__' %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% else %}
+                            <li><strong>{{ form.fields|get_item:field.name }}:</strong> {{ errors|join:", " }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {# Manually display form fields for better control #}
+        {% for field in form %}
+            <div class="mb-3">
+                {# Handle checkbox display for boolean fields like is_active #}
+                {% if field.name == 'is_active' %}
+                     <div class="form-check">
+                         {{ field }}
+                         {{ field.label_tag }}
+                          {% if field.errors %}
+                             {% for error in field.errors %}
+                                 <div class="invalid-feedback d-block">{{ error }}</div>
+                             {% endfor %}
+                          {% endif %}
+                          {% if field.help_text %}
+                             <small class="form-text text-muted">{{ field.help_text }}</small>
+                          {% endif %}
+                     </div>
+                 {% else %}
+                     {{ field.label_tag }}
+                     {{ field }}
+                     {% if field.errors %}
+                         {% for error in field.errors %}
+                             <div class="invalid-feedback d-block">{{ error }}</div>
+                         {% endfor %}
+                     {% endif %}
+                     {% if field.help_text %}
+                         <small class="form-text text-muted">{{ field.help_text }}</small>
+                     {% endif %}
+                 {% endif %}
+            </div>
+        {% endfor %}
+
+        {# Submit button - Show only if user has permission #}
+        {# If updating, check change permission for the object's organization #}
+        {# If creating, check add permission for the selected organization (if available in form data/initial) or general add permission #}
+        {% if form.instance.pk %} {# If updating #}
+            {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(form.instance.organization, 'hr.change_department') %}
+                <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره تغییرات" %}</button>
+            {% endif %}
+        {% else %} {# If creating #}
+             {# Check permission based on initial organization data if available #}
+             {% with initial_org=form.initial.organization %}
+                 {% if initial_org and request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(initial_org, 'hr.add_department') %}
+                      <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+                 {% elif not initial_org and request.user.is_staff or request.user.is_superuser or request.user.has_perm('hr.add_department') %}
+                      {# Fallback for general create link if no initial organization #}
+                      <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+                 {% endif %}
+             {% endwith %}
+        {% endif %}
+
+
+        {# Link back to relevant list #}
+        {% if form.instance.pk %}
+            {% with organization_pk=form.instance.organization.pk %}
+                <a href="{% url 'hr:department_list_by_org' organization_pk=organization_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+            {% endwith %}
+        {% elif organization_pk %} {# If creating for a specific organization (passed via context or initial) #}
+             <a href="{% url 'hr:department_list_by_org' organization_pk=organization_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% else %} {# Fallback to general list #}
+             <a href="{% url 'hr:department_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% endif %}
+
+    </form>
+</div>
+{% endblock %}

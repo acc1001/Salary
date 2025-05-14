@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load users_tags %} {# Assuming you have a get_item filter here #}
+
+{% block title %{% if form.instance.pk %}{% trans "ویرایش سقف بیمه" %}{% else %}{% trans "افزودن سقف بیمه جدید" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if form.instance.pk %}{% trans "ویرایش سقف بیمه" %}{% else %}{% trans "افزودن سقف بیمه جدید" %}{% endif %}</h2>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        {# Display general form errors #}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% trans "لطفاً خطاهای زیر را اصلاح کنید:" %}
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% if field == '__all__' %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% else %}
+                            <li><strong>{{ form.fields|get_item:field.name }}:</strong> {{ errors|join:", " }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {# Manually display form fields for better control #}
+        {% for field in form %}
+            <div class="mb-3">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        {# Submit button - Show only if user has permission #}
+        {# If updating, check change permission for the object's organization #}
+        {# If creating, check add permission for the organization of the related fiscal year (fiscal_year is in context) #}
+        {% if form.instance.pk %}
+            {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(form.instance.fiscal_year.organization, 'settings_app.change_insuranceceiling') %}
+                <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+            {% endif %}
+        {% elif fiscal_year %} {# If creating and fiscal_year is in context #}
+             {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(fiscal_year.organization, 'settings_app.add_insuranceceiling') %}
+                  <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+             {% endif %}
+        {% endif %}
+
+
+        {# Link back to relevant list #}
+        {% if fiscal_year %}
+            <a href="{% url 'settings_app:insurance_ceiling_list' fiscal_year_pk=fiscal_year.pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% elif form.instance.pk %}
+             <a href="{% url 'settings_app:insurance_ceiling_list' fiscal_year_pk=form.instance.fiscal_year.pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% else %}
+             <a href="{% url 'settings_app:fiscal_year_list' %}" class="btn btn-secondary mt-3">{% trans "بازگشت به لیست سال‌های مالی" %}</a>
+        {% endif %}
+
+    </form>
+</div>
+{% endblock %}

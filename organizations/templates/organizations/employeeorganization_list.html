@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "لیست عضویت‌های کارمند در سازمان" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "لیست عضویت‌های کارمند در سازمان" %}</h2>
+    {# Link to create a new Employee Organization - Show only if user has permission #}
+    {# Check if user is staff/superuser or has general add_employeeorganization permission #}
+    {# A more precise check would be needed if creating from an organization-specific page #}
+    {% if request.user.is_staff or request.user.is_superuser or request.user.has_perm('organizations.add_employeeorganization') %}
+        <a href="{% url 'organizations:employeeorganization_create' %}" class="btn btn-primary mb-3">{% trans "افزودن عضویت جدید" %}</a>
+    {% endif %}
+
+    {% if employee_organizations %}
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "کارمند" %}</th>
+                    <th>{% trans "سازمان" %}</th>
+                    <th>{% trans "تاریخ شروع" %}</th>
+                    <th>{% trans "تاریخ پایان" %}</th>
+                    <th>{% trans "فعال" %}</th>
+                    <th>{% trans "عملیات" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for eo in employee_organizations %}
+                <tr>
+                    <td>{{ eo.employee.first_name }} {{ eo.employee.last_name }}</td>
+                    <td>{{ eo.organization.name }}</td>
+                    <td>{{ eo.start_date }}</td>
+                    <td>{{ eo.end_date|default:_("تاکنون") }}</td>
+                    <td>
+                        {% if eo.is_active %}
+                            <span class="badge bg-success">{% trans "بله" %}</span>
+                        {% else %}
+                            <span class="badge bg-danger">{% trans "خیر" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                         {# Link to update this Employee Organization - Show only if user has permission #}
+                         {# Check if user has change permission in the organization of the membership #}
+                         {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(eo.organization, 'organizations.change_employeeorganization') %}
+                            <a href="{% url 'organizations:employeeorganization_update' pk=eo.pk %}" class="btn btn-warning btn-sm">{% trans "ویرایش" %}</a>
+                         {% endif %}
+                         {# Link to delete this Employee Organization - Show only if user has permission #}
+                         {# Check if user has delete permission in the organization of the membership #}
+                         {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(eo.organization, 'organizations.delete_employeeorganization') %}
+                            <a href="{% url 'organizations:employeeorganization_delete' pk=eo.pk %}" class="btn btn-danger btn-sm">{% trans "حذف" %}</a>
+                         {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{% trans "هیچ عضویت کارمند در سازمانی یافت نشد." %}</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load i18n %} {# برای استفاده از تگ‌های ترجمه جنگو اگر از gettext_lazy استفاده می‌کنید #}
+
+{% load users_tags %} {# <--- این خط را اضافه کنید #}
+
+{% block title %}{% trans "ورود به سیستم" %}{% endblock %} {# عنوان صفحه #}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center"> {# وسط چین کردن فرم #}
+        <div class="col-md-6"> {# تعیین عرض ستون در سیستم گرید بوت استرپ #}
+            <div class="card"> {# استفاده از کلاس کارت #}
+                <div class="card-header">
+                    <h3 class="text-center">{% trans "ورود به سیستم" %}</h3>
+                </div>
+                <div class="card-body">
+                    {# نمایش پیام‌های جنگو (مثل خطاهای لاگین) - نیاز به نمایش messages در base.html #}
+                    {% if messages %}
+                        <div class="messages">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        {# نمایش خطاهای کلی فرم #}
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                {% trans "لطفاً خطاهای زیر را اصلاح کنید:" %}
+                                <ul>
+                                    {% for field, errors in form.errors.items %}
+                                        {% if field == '__all__' %}
+                                            {% for error in errors %}
+                                                <li>{{ error }}</li>
+                                            {% endfor %}
+                                        {% else %}
+                                            <li><strong>{{ form.fields|get_item:field }}:</strong> {{ errors|join:", " }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        {# نمایش فیلدهای فرم به صورت دستی برای کنترل بهتر #}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        {# فیلد hidden برای redirect next - جنگو به صورت خودکار اضافه می‌کند #}
+                        {# <input type="hidden" name="next" value="{{ next }}"> #}
+
+                        <div class="d-grid gap-2"> {# دکمه تمام عرض #}
+                            <button type="submit" class="btn btn-primary">{% trans "ورود" %}</button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        {# لینک ثبت نام (در صورت نیاز) #}
+                        {% url 'register' as register_url %} {# فرض می‌کنیم url name ثبت نام register است #}
+                        {% if register_url %}
+                             <p>{% trans "حساب کاربری ندارید؟" %} <a href="{{ register_url }}">{% trans "ثبت نام کنید" %}</a></p>
+                        {% endif %}
+
+                        {# لینک فراموشی رمز عبور (در صورت نیاز) #}
+                        {# <p><a href="{% url 'password_reset' %}">{% trans "رمز عبور را فراموش کرده‌اید؟" %}</a></p> #}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# نیاز به تابع کمکی get_item #}
+{# {% load my_app_tags %} #}
+
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load users_tags %} {# <--- این خط را اضافه کنید #}
+{% block title %}{% trans "ثبت نام کاربر جدید" %}{% endblock %}
+
+{% block content %}
+
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">{% trans "ثبت نام کاربر جدید" %}</h3>
+                </div>
+                <div class="card-body">
+                     {# نمایش پیام‌های جنگو (مثل پیام موفقیت ثبت نام) - نیاز به نمایش messages در base.html #}
+                    {% if messages %}
+                        <div class="messages">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        {# نمایش خطاهای کلی فرم #}
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                {% trans "لطفاً خطاهای زیر را اصلاح کنید:" %}
+                                {# نمایش خطاها مانند login.html #}
+                                 <ul>
+                                    {% for field, errors in form.errors.items %}
+                                        {% if field == '__all__' %}
+                                            {% for error in errors %}
+                                                <li>{{ error }}</li>
+                                            {% endfor %}
+                                        {% else %}
+                                            <li><strong>{{ form.fields|get_item:field }}:</strong> {{ errors|join:", " }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        {# نمایش فیلدهای فرم به صورت دستی #}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">{% trans "ثبت نام" %}</button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-3">
+                         {% url 'login' as login_url %} {# فرض می‌کنیم url name لاگین login است #}
+                         {% if login_url %}
+                             <p>{% trans "قبلاً حساب کاربری دارید؟" %} <a href="{{ login_url }}">{% trans "ورود" %}</a></p>
+                         {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# نیاز به تابع کمکی get_item #}
+{# {% load my_app_tags %} #}
+
+{% endblock %}

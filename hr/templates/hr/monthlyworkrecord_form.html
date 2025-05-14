@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load users_tags %} {# Assuming you have a get_item filter here #}
+
+{% block title %}{% if form.instance.pk %}{% trans "ویرایش رکورد کارکرد ماهیانه" %}{% else %}{% trans "افزودن رکورد کارکرد ماهیانه جدید" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if form.instance.pk %}{% trans "ویرایش رکورد کارکرد ماهیانه" %}{% else %}{% trans "افزودن رکورد کارکرد ماهیانه جدید" %}{% endif %}</h2>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        {# Display general form errors #}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% trans "لطفاً خطاهای زیر را اصلاح کنید:" %}
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% if field == '__all__' %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% else %}
+                            <li><strong>{{ form.fields|get_item:field.name }}:</strong> {{ errors|join:", " }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {# Manually display form fields for better control #}
+        {% for field in form %}
+            <div class="mb-3">
+                 {{ field.label_tag }}
+                 {{ field }}
+                 {% if field.errors %}
+                     {% for error in field.errors %}
+                         <div class="invalid-feedback d-block">{{ error }}</div>
+                     {% endfor %}
+                 {% endif %}
+                 {% if field.help_text %}
+                     <small class="form-text text-muted">{{ field.help_text }}</small>
+                 {% endif %}
+            </div>
+        {% endfor %}
+
+        {# Submit button - Show only if user has permission #}
+        {# If updating, check change permission for the object's organization #}
+        {# If creating, check add permission for the selected organization (if available in form data/initial) or general add permission #}
+        {% if form.instance.pk %} {# If updating #}
+            {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(form.instance.organization, 'hr.change_monthlyworkrecord') %}
+                <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره تغییرات" %}</button>
+            {% endif %}
+        {% else %} {# If creating #}
+             {# Check permission based on initial organization data if available #}
+             {% with initial_org=form.initial.organization %}
+                 {% if initial_org and request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(initial_org, 'hr.add_monthlyworkrecord') %}
+                      <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+                 {% elif not initial_org and request.user.is_staff or request.user.is_superuser or request.user.has_perm('hr.add_monthlyworkrecord') %}
+                      {# Fallback for general create link if no initial organization #}
+                      <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+                 {% endif %}
+             {% endwith %}
+        {% endif %}
+
+
+        {# Link back to relevant list #}
+        {% if form.instance.pk %}
+             <a href="{% url 'hr:monthlyworkrecord_list_by_employee_period' employee_pk=form.instance.employee.pk financial_period_pk=form.instance.financial_period.pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% elif employee_pk and financial_period_pk %} {# If creating for specific employee and period (passed via context or initial) #}
+             <a href="{% url 'hr:monthlyworkrecord_list_by_employee_period' employee_pk=employee_pk financial_period_pk=financial_period_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% elif employee_pk %} {# If creating for specific employee #}
+             <a href="{% url 'hr:monthlyworkrecord_list_by_employee' employee_pk=employee_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% elif organization_pk %} {# If creating for specific organization #}
+             <a href="{% url 'hr:monthlyworkrecord_list_by_org' organization_pk=organization_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% elif financial_period_pk %} {# If creating for specific financial period #}
+             <a href="{% url 'hr:monthlyworkrecord_list_by_period' financial_period_pk=financial_period_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% else %} {# Fallback to general list #}
+             <a href="{% url 'hr:monthlyworkrecord_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% endif %}
+
+    </form>
+</div>
+{% endblock %}

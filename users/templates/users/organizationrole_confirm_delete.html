@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "تایید حذف نقش سازمانی" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "تایید حذف نقش سازمانی" %}</h2>
+    <p>{% trans "آیا از حذف نقش سازمانی" %} "<strong>{{ organization_role }}</strong>" {% trans "اطمینان دارید؟ این عمل غیرقابل بازگشت است." %}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">{% trans "حذف" %}</button>
+        {# Link to cancel and go back to the list #}
+        {# Assuming the object (organization_role) is in context to get organization #}
+        {% with organization_pk=organization_role.organization.pk %}
+            <a href="{% url 'users:organizationrole_list_by_org' organization_pk=organization_pk %}" class="btn btn-secondary">{% trans "انصراف" %}</a>
+        {% endwith %}
+    </form>
+</div>
+{% endblock %}

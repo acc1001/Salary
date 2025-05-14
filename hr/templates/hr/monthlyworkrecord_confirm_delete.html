@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "تایید حذف رکورد کارکرد ماهیانه" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "تایید حذف رکورد کارکرد ماهیانه" %}</h2>
+    <p>{% trans "آیا از حذف رکورد کارکرد ماهیانه" %} "<strong>{{ monthlyworkrecord }}</strong>" {% trans "اطمینان دارید؟ این عمل غیرقابل بازگشت است." %}</p>
+
+    {# Delete button - Show only if user has permission #}
+    {# Check delete permission in the organization of the work record #}
+    {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(monthlyworkrecord.organization, 'hr.delete_monthlyworkrecord') %}
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% trans "حذف" %}</button>
+            {# Link back to list #}
+             <a href="{% url 'hr:monthlyworkrecord_list_by_employee_period' employee_pk=monthlyworkrecord.employee.pk financial_period_pk=monthlyworkrecord.financial_period.pk %}" class="btn btn-secondary">{% trans "انصراف" %}</a>
+        </form>
+    {% else %}
+         <p class="text-danger">{% trans "شما مجوز حذف این رکورد کارکرد را ندارید." %}</p>
+         {# Link back to list #}
+          <a href="{% url 'hr:monthlyworkrecord_list_by_employee_period' employee_pk=monthlyworkrecord.employee.pk financial_period_pk=monthlyworkrecord.financial_period.pk %}" class="btn btn-secondary">{% trans "بازگشت به لیست رکوردهای کارکرد" %}</a>
+    {% endif %}
+</div>
+{% endblock %}

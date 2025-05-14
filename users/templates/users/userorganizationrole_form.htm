@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load users_tags %} {# Assuming you have a get_item filter here #}
+
+{% block title %}{% if form.instance.pk %}{% trans "ویرایش انتساب نقش سازمانی" %}{% else %}{% trans "انتساب نقش سازمانی جدید" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if form.instance.pk %}{% trans "ویرایش انتساب نقش سازمانی" %}{% else %}{% trans "انتساب نقش سازمانی جدید" %}{% endif %}</h2>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        {# Display general form errors #}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% trans "لطفاً خطاهای زیر را اصلاح کنید:" %}
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% if field == '__all__' %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% else %}
+                            {# Assuming get_item filter exists to get field label by name #}
+                            <li><strong>{{ form.fields|get_item:field.name }}:</strong> {{ errors|join:", " }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {# Manually display form fields for better control #}
+        {% for field in form %}
+            <div class="mb-3">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        {# Submit button #}
+        <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+
+        {# Link to go back to the list of User Organization Roles #}
+        {# Try to link back to a filtered list if possible #}
+        {% if form.instance.pk %} {# If updating, use the object's organization or user #}
+            {% if form.instance.organization %}
+                <a href="{% url 'users:userorganizationrole_list_by_org' organization_pk=form.instance.organization.pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+            {% elif form.instance.user %}
+                {# Assuming you have a user detail page or list filtered by user #}
+                {# <a href="{% url 'users:userorganizationrole_list_by_user' user_pk=form.instance.user.pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a> #}
+                <a href="{% url 'users:userorganizationrole_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a> {# Fallback #}
+            {% else %}
+                 <a href="{% url 'users:userorganizationrole_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a> {# Fallback #}
+            {% endif %}
+        {% elif organization_pk %} {# If creating for a specific organization (passed via context or initial) #}
+             <a href="{% url 'users:userorganizationrole_list_by_org' organization_pk=organization_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% elif user_pk %} {# If creating for a specific user (passed via context or initial) #}
+             {# Assuming you have a user detail page or list filtered by user #}
+             {# <a href="{% url 'users:userorganizationrole_list_by_user' user_pk=user_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a> #}
+             <a href="{% url 'users:userorganizationrole_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a> {# Fallback #}
+        {% else %} {# Fallback to general list #}
+             <a href="{% url 'users:userorganizationrole_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% endif %}
+
+    </form>
+</div>
+{% endblock %}

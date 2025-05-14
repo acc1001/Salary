@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "لیست سازمان‌ها" %{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "لیست سازمان‌ها" %}</h2>
+
+    {# Link to create a new Organization - Show only if user has permission #}
+    {# Check if user is staff/superuser or has general add_organization permission #}
+    {% if request.user.is_staff or request.user.is_superuser or request.user.has_perm('organizations.add_organization') %}
+        <a href="{% url 'organizations:organization_create' %}" class="btn btn-primary mb-3">{% trans "افزودن سازمان جدید" %}</a>
+    {% endif %}
+
+    {% if organizations %}
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "نام سازمان" %}</th>
+                    <th>{% trans "کد سازمان" %}</th>
+                    <th>{% trans "فعال" %}</th>
+                    <th>{% trans "عملیات" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for org in organizations %}
+                <tr>
+                    <td>{{ org.name }}</td>
+                    <td>{{ org.code|default:"-" }}</td>
+                    <td>
+                        {% if org.is_active %}
+                            <span class="badge bg-success">{% trans "بله" %}</span>
+                        {% else %}
+                            <span class="badge bg-danger">{% trans "خیر" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {# Links for related objects (Fiscal Years, etc.) - Show only if user has view permission in this organization #}
+                        {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(org, 'settings_app.view_fiscalyear') %}
+                             {# Assuming fiscal_year_list can be filtered by organization #}
+                            {# <a href="{% url 'settings_app:fiscal_year_list_by_org' organization_pk=org.pk %}" class="btn btn-info btn-sm">{% trans "سال‌های مالی" %}</a> #}
+                             {# If fiscal_year_list view handles filtering based on user's accessible orgs, this link might just go to the general list #}
+                             {# Or you might need a custom URL pattern and view for this #}
+                        {% endif %}
+
+                         {# Link to list Organization Roles in this organization #}
+                         {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(org, 'users.view_organizationrole') %}
+                              <a href="{% url 'users:organizationrole_list_by_org' organization_pk=org.pk %}" class="btn btn-info btn-sm">{% trans "نقش‌های سازمانی" %}</a>
+                         {% endif %}
+
+                         {# Link to list User Organization Roles in this organization #}
+                         {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(org, 'users.view_userorganizationrole') %}
+                             <a href="{% url 'users:userorganizationrole_list_by_org' organization_pk=org.pk %}" class="btn btn-info btn-sm">{% trans "انتساب نقش‌ها" %}</a>
+                         {% endif %}
+
+                         {# Link to list Employee Organizations (memberships) in this organization #}
+                         {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(org, 'organizations.view_employeeorganization') %}
+                             {# Assuming employeeorganization_list can be filtered by organization #}
+                             {# <a href="{% url 'organizations:employeeorganization_list_by_org' organization_pk=org.pk %}" class="btn btn-info btn-sm">{% trans "عضویت کارکنان" %}</a> #}
+                         {% endif %}
+
+
+                        {# Link to update this Organization - Show only if user has permission #}
+                        {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(org, 'organizations.change_organization') %}
+                            <a href="{% url 'organizations:organization_update' pk=org.pk %}" class="btn btn-warning btn-sm">{% trans "ویرایش" %}</a>
+                        {% endif %}
+                        {# Link to delete this Organization - Show only if user has permission #}
+                        {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(org, 'organizations.delete_organization') %}
+                            <a href="{% url 'organizations:organization_delete' pk=org.pk %}" class="btn btn-danger btn-sm">{% trans "حذف" %}</a>
+                        {% endif %}
+                         {# Optional: Link to detail view #}
+                         {# <a href="{% url 'organizations:organization_detail' pk=org.pk %}" class="btn btn-info btn-sm">{% trans "جزئیات" %}</a> #}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{% trans "هیچ سازمانی یافت نشد." %}</p>
+    {% endif %}
+</div>
+{% endblock %}

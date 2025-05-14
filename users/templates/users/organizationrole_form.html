@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load users_tags %} {# Assuming you have a get_item filter here #}
+
+{% block title %}{% if form.instance.pk %}{% trans "ویرایش نقش سازمانی" %}{% else %}{% trans "افزودن نقش سازمانی جدید" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if form.instance.pk %}{% trans "ویرایش نقش سازمانی" %}{% else %}{% trans "افزودن نقش سازمانی جدید" %}{% endif %}</h2>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        {# Display general form errors #}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% trans "لطفاً خطاهای زیر را اصلاح کنید:" %}
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% if field == '__all__' %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% else %}
+                            {# Assuming get_item filter exists to get field label by name #}
+                            <li><strong>{{ form.fields|get_item:field.name }}:</strong> {{ errors|join:", " }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {# Manually display form fields for better control #}
+        {% for field in form %}
+            <div class="mb-3">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        {# Submit button #}
+        <button type="submit" class="btn btn-primary mt-3">{% trans "ذخیره اطلاعات" %}</button>
+
+        {# Link to go back to the list of Organization Roles #}
+        {# Try to link back to a filtered list if possible #}
+        {% if form.instance.pk %} {# If updating, use the object's organization #}
+            {% with organization_pk=form.instance.organization.pk %}
+                <a href="{% url 'users:organizationrole_list_by_org' organization_pk=organization_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+            {% endwith %}
+        {% elif organization_pk %} {# If creating for a specific organization (passed via context or initial) #}
+             <a href="{% url 'users:organizationrole_list_by_org' organization_pk=organization_pk %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% else %} {# Fallback to general list #}
+             <a href="{% url 'users:organizationrole_list' %}" class="btn btn-secondary mt-3">{% trans "انصراف" %}</a>
+        {% endif %}
+
+    </form>
+</div>
+{% endblock %}

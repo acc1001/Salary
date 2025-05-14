@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "لیست نقش‌های سازمانی" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>
+        {% trans "لیست نقش‌های سازمانی" %}
+        {% if organization %}{% trans "در سازمان" %}: {{ organization.name }}{% endif %}
+    </h2>
+
+    {# Link to create a new Organization Role #}
+    {% if organization %}
+        {# Create link for a specific organization #}
+        <a href="{% url 'users:organizationrole_create_in_org' organization_pk=organization.pk %}" class="btn btn-primary mb-3">
+            {% trans "افزودن نقش جدید در این سازمان" %}
+        </a>
+    {% else %}
+        {# General create link #}
+        <a href="{% url 'users:organizationrole_create' %}" class="btn btn-primary mb-3">
+            {% trans "افزودن نقش سازمانی جدید" %}
+        </a>
+    {% endif %}
+
+
+    {% if organization_roles %}
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "سازمان" %}</th>
+                    <th>{% trans "نام نقش" %}</th>
+                    <th>{% trans "توضیحات" %}</th>
+                    <th>{% trans "عملیات" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for role in organization_roles %}
+                <tr>
+                    <td>{{ role.organization.name }}</td>
+                    <td>{{ role.name }}</td>
+                    <td>{{ role.description|default:"-" }}</td>
+                    <td>
+                        {# Link to update this Organization Role #}
+                        <a href="{% url 'users:organizationrole_update' pk=role.pk %}" class="btn btn-warning btn-sm">{% trans "ویرایش" %}</a>
+                        {# Link to delete this Organization Role #}
+                        <a href="{% url 'users:organizationrole_delete' pk=role.pk %}" class="btn btn-danger btn-sm">{% trans "حذف" %}</a>
+                        {# Optional: Link to detail view #}
+                        {# <a href="{% url 'users:organizationrole_detail' pk=role.pk %}" class="btn btn-info btn-sm">{% trans "جزئیات" %}</a> #}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{% trans "هیچ نقش سازمانی یافت نشد." %}</p>
+    {% endif %}
+
+    {# Link back to relevant pages based on context #}
+    <div class="mt-3">
+        {% if organization %}
+             <a href="{% url 'organizations:organization_detail' pk=organization.pk %}" class="btn btn-secondary">{% trans "بازگشت به جزئیات سازمان" %}</a>
+        {% else %}
+             <a href="{% url 'home' %}" class="btn btn-secondary">{% trans "بازگشت به صفحه اصلی" %}</a>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

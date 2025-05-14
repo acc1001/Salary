@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "تایید حذف نوع آیتم حقوقی" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "تایید حذف نوع آیتم حقوقی" %}</h2>
+    <p>{% trans "آیا از حذف نوع آیتم حقوقی" %} "<strong>{{ salary_item_type }}</strong>" {% trans "اطمینان دارید؟ این عمل غیرقابل بازگشت است." %}</p>
+
+    {# Delete button - Show only if user has permission #}
+    {# Check delete permission in the organization of the item type #}
+    {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(salary_item_type.organization, 'salaries.delete_salaryitemtype') %}
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% trans "حذف" %}</button>
+            {# Link back to list #}
+            <a href="{% url 'salaries:salaryitemtype_list' organization_pk=salary_item_type.organization.pk financial_period_pk=salary_item_type.financial_period.pk %}" class="btn btn-secondary">{% trans "انصراف" %}</a>
+        </form>
+    {% else %}
+         <p class="text-danger">{% trans "شما مجوز حذف این نوع آیتم حقوقی را ندارید." %}</p>
+         {# Link back to list #}
+         <a href="{% url 'salaries:salaryitemtype_list' organization_pk=salary_item_type.organization.pk financial_period_pk=salary_item_type.financial_period.pk %}" class="btn btn-secondary">{% trans "بازگشت به لیست انواع آیتم‌های حقوقی" %}</a>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %} {# ارث‌بری از تمپلیت پایه شما #}
+{% load i18n %} {# برای استفاده از تگ‌های ترجمه جنگو اگر از gettext_lazy استفاده می‌کنید #}
+
+{% block title %{% trans "صفحه اصلی" %}{% endblock %} {# عنوان صفحه #}
+
+{% block content %} {# محتوای اصلی صفحه در بلاک content #}
+<div class="container mt-4"> {# استفاده از کلاس کانتینر و مارجین بالا از بوت استرپ #}
+    <div class="p-5 mb-4 bg-light rounded-3"> {# استفاده از Jumbotron یا معادل آن در بوت استرپ ۵ #}
+        <div class="container-fluid py-5">
+            <h1 class="display-5 fw-bold">{% trans "به سامانه مدیریت حقوق و دستمزد پیشرفته سازمانی خوش آمدید!" %}</h1> {# عنوان اصلی #}
+            <p class="col-md-8 fs-4">{% trans "این صفحه اصلی سامانه شما است. با استفاده از منوی بالا یا لینک‌های زیر به بخش‌های مختلف دسترسی پیدا کنید." %}</p> {# توضیحات #}
+
+            <hr class="my-4"> {# خط جداکننده #}
+
+            {# نمایش وضعیت ورود کاربر و لینک‌های مربوطه #}
+            <p>
+                {% if user.is_authenticated %} {# اگر کاربر وارد شده است #}
+                    {% trans "سلام" %}، <strong>{{ user.username }}</strong>! {% trans "شما وارد شده‌اید." %}
+                    <br>
+                    {# لینک به صفحه خروج (از URLهای اپ users) #}
+                    <a href="{% url 'users:logout' %}" class="btn btn-danger mt-2">{% trans "خروج" %}</a>
+
+                    {# لینک‌های مربوط به اپ‌های دیگر برای کاربران وارد شده #}
+                    <h3 class="mt-4">{% trans "بخش‌های سامانه" %}</h3>
+                    <ul>
+                        <li>
+                             {# لینک به لیست کارکنان (از URLهای اپ employees) #}
+                             <a href="{% url 'employees:employee_list' %}">{% trans "مدیریت کارکنان" %}</a>
+                        </li>
+                        <li>
+                              {# لینک به لیست سازمان‌ها (از URLهای اپ organizations) #}
+                             <a href="{% url 'organizations:organization_list' %}">{% trans "مدیریت سازمان‌ها" %}</a>
+                        </li>
+                         <li>
+                             {# لینک به لیست سال‌های مالی (به عنوان نقطه شروع تنظیمات) (از URLهای اپ settings_app) #)}
+                             <a href="{% url 'settings_app:fiscal_year_list' %}">{% trans "تنظیمات مالی و سازمانی" %}</a>
+                         </li>
+                         <li>
+                             {# لینک به لیست دپارتمان‌ها یا صفحه اصلی اپ hr (با نام اپ hr) #}
+                             <a href="{% url 'hr:department_list' %}">{% trans "منابع انسانی" %}</a>
+                         </li>
+                         <li>
+                             {# لینک به لیست وام‌های کارکنان (با نام اپ loans) #}
+                             <a href="{% url 'loans:employeeloan_list' %}">{% trans "وام‌ها" %}</a>
+                         </li>
+                        {# می‌توانید لینک‌های دیگر اپ‌ها را اینجا اضافه کنید (مثلاً اپ salaries برای مدیریت آیتم‌های حقوقی یا کارکرد) #}
+                        {# <li><a href="{% url 'salaries:salaryitemtype_list' %}">{% trans "آیتم‌های حقوقی" %}</a></li> #}
+                        {# <li><a href="{% url 'hr:monthlyworkrecord_list' %}">{% trans "کارکرد ماهیانه" %}</a></li> #}
+
+                        {# اضافه کردن لینک‌های مدیریت کاربران و دسترسی‌ها (فقط برای کاربران مجاز) #}
+                        {% if user.is_staff or user.is_superuser %}
+                            <h4 class="mt-4">{% trans "مدیریت کاربران و دسترسی‌ها" %}</h4>
+                             <ul>
+                                 <li><a href="{% url 'users:organizationrole_list' %}">{% trans "نقش‌های سازمانی" %}</a></li>
+                                 <li><a href="{% url 'users:userorganizationrole_list' %}">{% trans "انتساب نقش به کاربران" %}</a></li>
+                                 {# می‌توانید لینک به لیست کاربران (اگر ویو آن را دارید) را نیز اضافه کنید #}
+                                 {# <li><a href="{% url 'users:user_list' %}">{% trans "لیست کاربران" %}</a></li> #}
+                             </ul>
+                        {% endif %}
+
+                    </ul>
+
+                {% else %} {# اگر کاربر وارد نشده است #}
+                    {% trans "لطفاً برای دسترسی به قابلیت‌های سامانه وارد شوید یا ثبت‌نام کنید." %}
+                    <br>
+                    {# لینک به صفحه ورود (از URLهای اپ users) #}
+                    <a href="{% url 'users:login' %}" class="btn btn-primary mt-2">{% trans "ورود" %}</a>
+                    {# لینک به صفحه ثبت نام (از URLهای اپ users - اگر ویو و URL ثبت نام را فعال کرده‌اید) #}
+                    {% url 'users:register' as register_url %} {# بررسی وجود URL با نام 'register' و استفاده از نام کامل URL #}
+                    {% if register_url %}
+                        <a href="{{ register_url }}" class="btn btn-success mt-2 ms-2">{% trans "ثبت نام" %}</a>
+                    {% endif %}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    {# می‌توانید محتوای بیشتری به صفحه اصلی اضافه کنید #}
+</div>
+{% endblock %} {# پایان بلاک content #}

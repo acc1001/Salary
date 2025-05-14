@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "تایید حذف دپارتمان" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "تایید حذف دپارتمان" %}</h2>
+    <p>{% trans "آیا از حذف دپارتمان" %} "<strong>{{ department }}</strong>" {% trans "اطمینان دارید؟ این عمل غیرقابل بازگشت است." %}</p>
+
+    {# Delete button - Show only if user has permission #}
+    {# Check delete permission in the organization of the department #}
+    {% if request.user.is_staff or request.user.is_superuser or request.user.has_organization_permission(department.organization, 'hr.delete_department') %}
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% trans "حذف" %}</button>
+            {# Link back to list #}
+            {% with organization_pk=department.organization.pk %}
+                <a href="{% url 'hr:department_list_by_org' organization_pk=organization_pk %}" class="btn btn-secondary">{% trans "انصراف" %}</a>
+            {% endwith %}
+        </form>
+    {% else %}
+         <p class="text-danger">{% trans "شما مجوز حذف این دپارتمان را ندارید." %}</p>
+         {# Link back to list #}
+         {% with organization_pk=department.organization.pk %}
+             <a href="{% url 'hr:department_list_by_org' organization_pk=organization_pk %}" class="btn btn-secondary">{% trans "بازگشت به لیست دپارتمان‌ها" %}</a>
+         {% endwith %}
+    {% endif %}
+
+</div>
+{% endblock %}
